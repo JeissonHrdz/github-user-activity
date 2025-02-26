@@ -6,6 +6,6 @@ public class Main {
     public static void main(String[] args) throws IOException {
 
         GitHubActivity gitHubActivity = new GitHubActivity();
-        gitHubActivity.getActivity("JeissonHrdz");
+        gitHubActivity.getActivity("midudev");
     }
 }

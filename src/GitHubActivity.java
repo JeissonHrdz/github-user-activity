@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.sql.SQLOutput;
 
 public class GitHubActivity {
 
@@ -24,24 +25,31 @@ public class GitHubActivity {
         con.disconnect();
 
         String jsonResponse = content.toString();
-      //  System.out.println(jsonResponse);
+        // System.out.println(jsonResponse);
         processJSON(jsonResponse);
     }
 
     public void processJSON(String jsonResponse) throws IOException {
         jsonResponse = jsonResponse.substring(1, jsonResponse.length() - 1);
-        String[] Events = jsonResponse.split("\\},\\{");
+        String[] Events = splitJsonObjects(jsonResponse); // jsonResponse.split("\\},\\{");
         for (String event : Events) {
+
             event = "{" + event + "}";
 
+            String createdAt = "";
             String type = extractField(event, "type");
-            String repoName = extractField(event, "name","repo");
-            String createdAt = extractField(event, "message","commits","payload");
-
+            String repoName = extractField(event, "name", "repo");
             System.out.println("Type event: " + type);
             System.out.println("Repo name: " + repoName);
-            System.out.println("Message: " + createdAt);
-            System.out.println("----------------------------------");
+
+            if (event.contains("commits") && !type.contains("PullRequestEvent")) {
+                createdAt = extractField(event, "message", "commits", "payload");
+                System.out.println("<-- Commit --> ");
+                System.out.println("Message: " + createdAt);
+            }
+            System.out.println("..........................................................");
+
+
         }
     }
 
@@ -62,18 +70,38 @@ public class GitHubActivity {
     }
 
     private String extractField(String json, String fieldName, String parentField, String mainField) {
-        System.out.println(json);
+        //  System.out.println(json);
         int mainStartIndex = json.indexOf("\"" + mainField + "\":{") + mainField.length() + 3;
-        int mainEndIndex = json.indexOf("},{,", mainStartIndex);
+        int mainEndIndex = json.indexOf("}]", mainStartIndex);
+        String mainJson = json.substring(mainStartIndex, (mainEndIndex + 1)) + "}]";
 
-        String mainJson = json.substring(mainStartIndex, mainEndIndex);
-        System.out.println(mainJson);
 
-        int parentStartIndex = mainJson.indexOf("\"" + parentField + "\":[{") + parentField.length() + 3;
-        int parentEndIndex = mainJson.indexOf("}]", parentStartIndex);
-        System.out.println(parentStartIndex + "+"+ parentEndIndex);
+        int parentStartIndex = mainJson.indexOf("\"" + parentField + "\":[") + parentField.length() + 4;
+        int parentEndIndex = mainJson.indexOf("]", parentStartIndex);
 
-        String parentJson = json.substring(parentStartIndex, parentEndIndex);
+        String parentJson = mainJson.substring(parentStartIndex, parentEndIndex);
+
         return extractField(parentJson, fieldName);
+    }
+
+    private static String[] splitJsonObjects(String json) {
+
+        java.util.ArrayList<String> objects = new java.util.ArrayList<>();
+        int start = 0;
+        int depth = 0;
+
+        for (int i = 0; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (c == '{') {
+                depth++;
+            } else if (c == '}') {
+                depth--;
+                if (depth == 0) {
+                    objects.add(json.substring(start, i + 1));
+                    start = i + 2;
+                }
+            }
+        }
+        return objects.toArray(new String[0]);
     }
 }

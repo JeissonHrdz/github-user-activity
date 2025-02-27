@@ -36,53 +36,63 @@ public class GitHubActivity {
 
             event = "{" + event + "}";
 
-            String createdAt = "";
+            String createdAt = extractField(event, "created_at");
             String type = extractField(event, "type");
             String repoName = extractField(event, "name", "repo");
             System.out.println("Type event: " + type);
             System.out.println("Repo name: " + repoName);
+            System.out.println("Created at: " + createdAt);
 
             if (event.contains("commits") && !type.contains("PullRequestEvent")) {
-                createdAt = extractField(event, "message", "commits", "payload");
+                String message = extractField(event, "message", "commits", "payload");
                 System.out.println("<-- Commit --> ");
-                System.out.println("Message: " + createdAt);
+                System.out.println("" + message);
             }
             System.out.println("..........................................................");
-
 
         }
     }
 
     public String extractField(String json, String fieldName) {
-        int startIndex = json.indexOf("\"" + fieldName + "\":") + fieldName.length() + 3;
+
+        int startIndex = json.indexOf("\"" + fieldName + "\":") + fieldName.length() +3;
         int endIndex = json.indexOf(",", startIndex);
         if (endIndex == -1) {
-            endIndex = json.indexOf("\"", startIndex);
+            endIndex = json.indexOf("}", startIndex);
         }
         return json.substring(startIndex, endIndex).replace("\"", "").trim();
     }
 
     private String extractField(String json, String fieldName, String parentField) {
+
         int parentStartIndex = json.indexOf("\"" + parentField + "\":{") + parentField.length() + 3;
         int parentEndIndex = json.indexOf("}", parentStartIndex);
         String parentJson = json.substring(parentStartIndex, parentEndIndex);
-        return extractField(parentJson, fieldName);
+
+        return extractField(parentJson+"}", fieldName);
     }
 
     private String extractField(String json, String fieldName, String parentField, String mainField) {
-        //  System.out.println(json);
+
         int mainStartIndex = json.indexOf("\"" + mainField + "\":{") + mainField.length() + 3;
         int mainEndIndex = json.indexOf("}]", mainStartIndex);
         String mainJson = json.substring(mainStartIndex, (mainEndIndex + 1)) + "}]";
-
 
         int parentStartIndex = mainJson.indexOf("\"" + parentField + "\":[") + parentField.length() + 4;
         int parentEndIndex = mainJson.indexOf("]", parentStartIndex);
 
         String parentJson = mainJson.substring(parentStartIndex, parentEndIndex);
-
-        return extractField(parentJson, fieldName);
+        //System.out.println(parentJson);
+        String messages = "";
+        String[] commitMessages = splitJsonObjects(parentJson);
+        for (String commitMessage : commitMessages) {
+            messages += "Author: " + extractField(commitMessage, "name","author") + "\n" +
+                    "Message: "+  extractField(commitMessage, fieldName) + "\n";
+        }
+    return  messages;
     }
+
+
 
     private static String[] splitJsonObjects(String json) {
 

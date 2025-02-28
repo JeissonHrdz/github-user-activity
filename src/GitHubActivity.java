@@ -7,7 +7,7 @@ import java.sql.SQLOutput;
 
 public class GitHubActivity {
 
-    public void getActivity(String userName) throws IOException {
+    public void getActivity(String userName,String eventOp) throws IOException {
         String urlString = "https://api.github.com/users/" + userName + "/events";
 
         //Create Conection HTTP
@@ -26,30 +26,35 @@ public class GitHubActivity {
 
         String jsonResponse = content.toString();
         // System.out.println(jsonResponse);
-        processJSON(jsonResponse);
+        processJSON(jsonResponse, eventOp);
     }
 
-    public void processJSON(String jsonResponse) throws IOException {
+    public void processJSON(String jsonResponse, String eventOp) throws IOException {
         jsonResponse = jsonResponse.substring(1, jsonResponse.length() - 1);
         String[] Events = splitJsonObjects(jsonResponse); // jsonResponse.split("\\},\\{");
         for (String event : Events) {
+
 
             event = "{" + event + "}";
 
             String createdAt = extractField(event, "created_at");
             String type = extractField(event, "type");
             String repoName = extractField(event, "name", "repo");
-            System.out.println("Type event: " + type);
-            System.out.println("Repo name: " + repoName);
-            System.out.println("Created at: " + createdAt);
 
-            if (event.contains("commits") && !type.contains("PullRequestEvent")) {
-                String message = extractField(event, "message", "commits", "payload");
-                System.out.println("<-- Commit --> ");
-                System.out.println("" + message);
+
+            if (type.equals(eventOp) || eventOp.equals("all")) {
+
+                System.out.println("Type event: " + type);
+                System.out.println("Repo name: " + repoName);
+                System.out.println("Created at: " + createdAt);
+
+                if (event.contains("commits") && !type.contains("PullRequestEvent")) {
+                    String message = extractField(event, "message", "commits", "payload");
+                    System.out.println("<-- Commit --> ");
+                    System.out.println("" + message);
+                }
+                System.out.println("..........................................................");
             }
-            System.out.println("..........................................................");
-
         }
     }
 

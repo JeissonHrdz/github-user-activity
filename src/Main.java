@@ -24,7 +24,8 @@ public class Main {
             System.out.println("Menu: ");
             System.out.println("1. List All Events");
             System.out.println("2. List For Events");
-            System.out.println("3. Exit");
+            System.out.println("3. Change User");
+            System.out.println("4. Exit");
             opccion = Integer.parseInt(sc.nextLine());
 
             switch (opccion) {
@@ -55,13 +56,20 @@ public class Main {
                     String event = sc.nextLine();
                     cli.listActivityForEvent(userName, event);
                     break;
+
                 case 3:
+                    System.out.println("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■");
+                    System.out.println("Please Enter the username : ");
+                    userName = sc.nextLine();
+                    break;
+
+                case 4:
                     System.out.println("\n ");
                     System.out.println("Exiting...");
                     break;
 
             }
-        } while (opccion != 3);
+        } while (opccion != 4);
 
     }
 }

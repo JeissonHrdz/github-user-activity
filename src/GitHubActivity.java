@@ -7,9 +7,10 @@ import java.sql.SQLOutput;
 
 public class GitHubActivity {
 
-    public void getActivity(String userName,String eventOp) throws IOException {
+    public void getActivity(String userName,String eventOp) {
         String urlString = "https://api.github.com/users/" + userName + "/events";
 
+        try {
         //Create Conection HTTP
         URL url = new URL(urlString);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -25,22 +26,22 @@ public class GitHubActivity {
         con.disconnect();
 
         String jsonResponse = content.toString();
-        // System.out.println(jsonResponse);
         processJSON(jsonResponse, eventOp);
+    } catch (Exception e) {
+            System.out.println("This user not exist or not have activity "+ e.getMessage());
+        }
     }
 
-    public void processJSON(String jsonResponse, String eventOp) throws IOException {
+    public void processJSON(String jsonResponse, String eventOp){
         jsonResponse = jsonResponse.substring(1, jsonResponse.length() - 1);
         String[] Events = splitJsonObjects(jsonResponse); // jsonResponse.split("\\},\\{");
+        boolean errorStatus = false;
+
         for (String event : Events) {
-
-
             event = "{" + event + "}";
-
             String createdAt = extractField(event, "created_at");
             String type = extractField(event, "type");
             String repoName = extractField(event, "name", "repo");
-
 
             if (type.equals(eventOp) || eventOp.equals("all")) {
 
@@ -54,6 +55,9 @@ public class GitHubActivity {
                     System.out.println("" + message);
                 }
                 System.out.println("..........................................................");
+            } else if(!errorStatus){
+                System.out.println("Not event activity");
+                errorStatus = true;
             }
         }
     }
